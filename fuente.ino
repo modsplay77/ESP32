@@ -22,7 +22,7 @@ uint8_t temprature_sens_read();
 
 // Usuarios y claves para la conexión WiFi
 char ssid[] = "Livebox6-767D"; //SSID - Red WiFi a la que me conecto
-char pass[] = "dvK6G3QnFLbz"; // Passowrd de la red WiFi
+char pass[] = "pwd"; // Passowrd de la red WiFi
 
 WiFiClient  client;
 
