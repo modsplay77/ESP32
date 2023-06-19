@@ -1,12 +1,13 @@
+#include <analogWrite.h>
+#include <dummy.h>
 #include <ThingSpeak.h>
-#include <DFRobot_RGBLCD1602.h>
 #include <WiFi.h>
 #include <WiFiClient.h>
 #include <WiFiServer.h>
 #include <WiFiClientSecure.h>
 #include <UniversalTelegramBot.h>
 #include <Wire.h>
-#include <dummy.h>
+
 
 
 
@@ -14,38 +15,38 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-uint8_t temprature_sens_read();
+  uint8_t temprature_sens_read();
 #ifdef __cplusplus
 }
 #endif
 
 
 // Usuarios y claves para la conexión WiFi
-char ssid[] = "Livebox6-767D"; //SSID - Red WiFi a la que me conecto
-char pass[] = "pwd"; // Passowrd de la red WiFi
+char ssid[] = "MIWIFI_j7Ff";  //SSID - Red WiFi a la que me conecto
+char pass[] = "*****";     // Passowrd de la red WiFi
 
-WiFiClient  client;
+WiFiClient client;
 
 //Mientras no creo app, lo accionaremos por telegram
 //Token de Telegram BOT se obtenienen desde Botfather en telegram
-#define BOT_TOKEN "ID:token"// Token de telegram del canal bot
-#define ID_Chat "ndelchat"//ID_Chat se obtiene de telegram
-const unsigned long tiempo = 1000; //tiempo medio entre escaneo de mensajes
+#define BOT_TOKEN "*******"
+#define ID_Chat "******"        //ID_Chat se obtiene de telegram
+const unsigned long tiempo = 1000;  //tiempo medio entre escaneo de mensajes
 String datos;
 String chat_id;
 WiFiClientSecure secured_client;
 UniversalTelegramBot bot(BOT_TOKEN, secured_client);
-unsigned long tiempoAnterior; //última vez que se realizó el análisis de mensajes
+unsigned long tiempoAnterior;  //última vez que se realizó el análisis de mensajes
 
 
 // Variables para definir la conexión con ThingSpeak
-unsigned long myChannelNumber = canal; //Código de canal de Things Speak
-const char * myWriteAPIKey = "key"; // Indicar aquí el código de escritura de ThingSpeak
+unsigned long myChannelNumber = *******;         //Código de canal de Things Speak
+const char* myWriteAPIKey = "********";  // Indicar aquí el código de escritura de ThingSpeak
 
 //variables del esp32
-//const int ledPin = 34;
+const int ledPin = 34;
 const int pulPin = 15;
-const int bombPin = 4; 
+const int bombPin = 4;
 //int actual = (digitalRead(bombPin));
 //int tiempo_activo = 0;
 float temp_cpu = ((temprature_sens_read() - 32) / 1.8);
@@ -54,10 +55,18 @@ int estadoM = 1;
 int inicio = 1;
 int RSSI;
 
+//config tira leds RGB
+const int redpin = 13;
+const int greenpin = 12;
+const int bluepin = 14;
+int analogPin = 34;  // entrada del potenciometro para controlar colores leds
+int val;
+
+
 
 //waterflow
-//#define LED_BUILTIN 
-#define SENSOR  2
+//#define LED_BUILTIN
+#define SENSOR 2
 long currentMillis = 0;
 long previousMillis = 0;
 int interval = 1000;
@@ -75,49 +84,35 @@ int caudal_total = totalMilliLitres;
 
 
 
-//Configurar LCD
-DFRobot_RGBLCD1602 lcd(/*RGBAddr*/0x6B ,/*lcdCols*/16,/*lcdRows*/2);  //16 characters and 2 lines of show
-
-void breath(unsigned char color){
-    for(int i=0; i<255; i++){
-        lcd.setPWM(color, i);  
-        delay(5);
-    }
-
-    delay(500);
-    for(int i=254; i>=0; i--){
-        lcd.setPWM(color, i);
-        delay(5);
-    }
-
-    delay(500);
-}
 
 //waterflow
 volatile double waterFlow;
-void IRAM_ATTR pulseCounter()
-{
+void IRAM_ATTR pulseCounter() {
   pulseCount++;
 }
 
 
 
 
-void setup()
-{
+void setup() {
 
   //configuramos modo pines
-       pinMode(bombPin, OUTPUT);
-        digitalWrite(bombPin, LOW);     
-        pinMode(pulPin, INPUT);
-         
-      // pinMode(ledPin, OUTPUT);
-      //  digitalWrite(ledPin, LOW);
+  pinMode(bombPin, OUTPUT);
+  digitalWrite(bombPin, LOW);
+  pinMode(pulPin, INPUT);
+
+  // pinMode(ledPin, OUTPUT);
+  //  digitalWrite(ledPin, LOW);
+
+  //modopìnes RGB
+  pinMode(redpin, OUTPUT);
+  pinMode(bluepin, OUTPUT);
+  pinMode(greenpin, OUTPUT);
 
 
-   
-//waterflow
- Serial.begin(115200);
+
+  //waterflow
+  Serial.begin(115200);
 
   //pinMode(LED_BUILTIN, OUTPUT);
   pinMode(SENSOR, INPUT);
@@ -132,79 +127,81 @@ void setup()
 
 
 
-       
-// initialize LCD
-    lcd.init();
-    // Print a message to the LCD.
-    lcd.setCursor(1, 0);
-    lcd.print("Fuente Jardin");
-    lcd.setCursor(1, 1);
-    delay(2000);
-    lcd.clear();
-      lcd.setCursor(1, 0);
-    lcd.print("Iniciando...");
-    delay(2000);
+
+  // initialize LCD
+  // lcd.init();
+  // Print a message to the LCD.
+
+  Serial.print("Fuente Jardin");
+  delay(1000);
+  Serial.print("Iniciando...");
+  delay(200);
 
 
-//Imprimir mensaje de conexión a la red Wifi
-WiFi.begin(ssid, pass); //Se inicia la conexión al Wifi
+  //Imprimir mensaje de conexión a la red Wifi
+  WiFi.begin(ssid, pass);  //Se inicia la conexión al Wifi
   WiFi.mode(WIFI_STA);
-//en el LCD
-  lcd.clear();
-       lcd.setCursor(1, 0);
-    lcd.print("Conectando...");
- delay (2000);
 
-     secured_client.setCACert(TELEGRAM_CERTIFICATE_ROOT); //Agregar certificado raíz para api.telegram.org
-  
+  Serial.print("Conectando...");
+  delay(200);
 
-//Minetras se conecta imprimirá ...
-while(WiFi.status() != WL_CONNECTED){
-  delay(5000);
-  
-  
-//Ya que se estableció la conexión al Wifi se imprime conexión establecida
-  lcd.clear();
-       lcd.setCursor(1, 0);
-    lcd.print("Conectado");
-    delay (2000);
+  secured_client.setCACert(TELEGRAM_CERTIFICATE_ROOT);  //Agregar certificado raíz para api.telegram.org
+
+
+  //Minetras se conecta imprimirá ...
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(5000);
+
+
+    //Ya que se estableció la conexión al Wifi se imprime conexión establecida
+
+    Serial.print("Conectado");
+    delay(2000);
     valor_wifi();
-   
-} 
-ThingSpeak.begin(client); //Iniciar el servidor de ThingSpeak
-if(inicio == 1){
-  
-    lcd.clear();
-    lcd.setCursor(0, 0);
-    lcd.print("Sistema listo");
-    delay (2000);
-    bot.sendMessage(ID_Chat, "Sistema preparado!!!, escribe /Ayuda para ver las opciones", "");//Enviamos un mensaje a telegram para informar que el sistema está listo
+  }
+  ThingSpeak.begin(client);  //Iniciar el servidor de ThingSpeak
+  if (inicio == 1) {
+
+    Serial.print("Sistema listo");
+    delay(200);
+    bot.sendMessage(ID_Chat, "Sistema preparado!!!, escribe /Ayuda para ver las opciones", "");  //Enviamos un mensaje a telegram para informar que el sistema está listo
     inicio = 0;
-
+  }
 }
-}
 
 
-void loop()
-{
-     valor_wifi();
-    
-     breath(lcd.REG_ONLY);
-    
- 
+void loop() {
+  valor_wifi();
 
-      //Lectura del pulsador
- int lecturaPin15 = digitalRead(pulPin);
- if(lecturaPin15 == LOW){
- 
-  Serial.print("Boton activado");
+
+
+  //funcion leds RGB
+
+  for (val = 255; val > 0; val--) {
+    analogWrite(11, val);
+    analogWrite(10, 255 - val);
+    analogWrite(9, 128 - val);
+    delay(15);
+  }
+  for (val = 0; val < 255; val++) {
+    analogWrite(11, val);
+    analogWrite(10, 255 - val);
+    analogWrite(9, 128 - val);
+    delay(15);
+  }
+
+  //Lectura del pulsador
+  int lecturaPin15 = digitalRead(pulPin);
+  if (lecturaPin15 == LOW) {
+
+    Serial.print("Boton activado");
   }
 
 
-//waterflow
- currentMillis = millis();
+  //waterflow
+  currentMillis = millis();
   if (currentMillis - previousMillis > interval) {
-    
+
     pulse1Sec = pulseCount;
     pulseCount = 0;
 
@@ -223,196 +220,172 @@ void loop()
 
     // Add the millilitres passed in this second to the cumulative total
     totalMilliLitres += flowMilliLitres;
-    
+
     // Print the flow rate for this second in litres / minute
-    lcd.clear();
-    lcd.print("Flow rate: ");
-    lcd.setCursor(2,2);
-    lcd.print(int(flowRate));  // Print the integer part of the variable
-    lcd.print("L/min");
- 
-    Serial.print("\t");       // Print tab space
-    
+
+    Serial.print("Flow rate: ");
+
+    Serial.print(int(flowRate));  // Print the integer part of the variable
+    Serial.print("L/min");
+
+    Serial.print("\t");  // Print tab space
+
     // Print the cumulative total of litres flowed since starting
-   
+
     Serial.print("Output Liquiq: ");
-       
+
 
     Serial.print(totalMilliLitres);
     Serial.print("mL / ");
     Serial.print(totalMilliLitres / 1000);
     Serial.print("L");
-   
   }
   //Verifica si hay datos nuevos en telegram cada 1 segundo
-  if (millis() - tiempoAnterior > tiempo)
-  {
+  if (millis() - tiempoAnterior > tiempo) {
     int numerosMensajes = bot.getUpdates(bot.last_message_received + 1);
- 
-    while (numerosMensajes)
-    { 
-     
+
+    while (numerosMensajes) {
+
       Serial.print("Comando recibido");
       mensajesNuevos(numerosMensajes);
       numerosMensajes = bot.getUpdates(bot.last_message_received + 1);
     }
- 
+
     tiempoAnterior = millis();
   }
-   
 
 
 
- Serial.print("Temp CPU: ");
-  
+
+  Serial.print("Temp CPU: ");
+
   // Convert raw temperature in F to Celsius degrees
-   
-  
+
+
   Serial.print((temprature_sens_read() - 32) / 1.8);
- 
+
   delay(50);
 
 
 
-//arrancar o apagar bomba
-int activar = digitalRead(pulPin);
- if ((bombPin == LOW ) && (activar == HIGH)){
- bombaManual();
-
- }
-
-
-
- 
+  //arrancar o apagar bomba
+  int activar = digitalRead(pulPin);
+  if ((bombPin == LOW) && (activar == HIGH)) {
+    bombaManual();
+  }
 }
 
 /*FUNCIONES*/
 
 //valores conexion wifi
-void valor_wifi(){
-  lcd.clear();
- lcd.setCursor(0,0);
-    lcd.print(WiFi.localIP()); 
-    delay (5000);
- lcd.clear();
-  lcd.setCursor(0,0);
- lcd.print("Signal Strength: ");
-  lcd.setCursor(2,2);
- lcd.print(WiFi.RSSI()); 
- int RSSI = (WiFi.RSSI()) * -1;
- delay (2000);
+void valor_wifi() {
+
+  Serial.print(WiFi.localIP());
+  Serial.print("Signal Strength: ");
+
+  Serial.print(WiFi.RSSI());
+  int RSSI = (WiFi.RSSI()) * -1;
+
   write_datos();
 }
 
 //Funciona para escribir datos en la nube
 
-void write_datos(){
-  
-    
-  // Hacemos un primer intento de subir los datos. Al usar una cuenta gratuita tenemos limitación sobre la velocidad a la que podemos subir información. 
+void write_datos() {
+
+
+  // Hacemos un primer intento de subir los datos. Al usar una cuenta gratuita tenemos limitación sobre la velocidad a la que podemos subir información.
   // En el caso de que falle, probamos pasados 2 segundos.
   int mensaje = ThingSpeak.writeFields(myChannelNumber, myWriteAPIKey);
 
-  ThingSpeak.setField(3, temp_cpu); 
-   ThingSpeak.setField(4, caudal_total);
-   ThingSpeak.setField(1, bombaStatus);
-    ThingSpeak.setField(2, flujo);
-      ThingSpeak.setField(7, RSSI);
-   
-  
+  ThingSpeak.setField(3, temp_cpu);
+  ThingSpeak.setField(4, caudal_total);
+  ThingSpeak.setField(1, bombaStatus);
+  ThingSpeak.setField(2, flujo);
+  ThingSpeak.setField(7, RSSI);
+
+
   /*Escribir datos con marca de tiempo  
 tStamp = datetime('now');
 ThingSpeak.writeFields(2177896,[2.3,1.2,3.2,0.1],'WriteKey','23ZLGOBBU9TWHG2H','TimeStamp',tStamp);*/
 
-  if (mensaje == 200){
-   
-    //LCD
- 
-    Serial.print("Canal Update");
-   
-   
-     
+  if (mensaje == 200) {
 
-  }
-  else{
+    //LCD
+
+    Serial.print("Canal Update");
+
+
+
+
+  } else {
     delay(2000);
-    if (mensaje == 200){
+    if (mensaje == 200) {
       Serial.print("Canal Update");
-    }
-    else{
+    } else {
       Serial.print("ERROR: " + String(mensaje));
 
-    Serial.print("ERROR envio");
-
-
+      Serial.print("ERROR envio");
     }
   }
- }
+}
 
 
 
-void bombaManual(){
-  int lecturaPin2 = digitalRead(bombPin);//Leemos el estado del pin de la bomba de agua
-  if(lecturaPin2 == LOW ){
-    digitalWrite(bombPin, HIGH);//Activamos la bomba de agua
+void bombaManual() {
+  int lecturaPin2 = digitalRead(bombPin);  //Leemos el estado del pin de la bomba de agua
+  if (lecturaPin2 == LOW) {
+    digitalWrite(bombPin, HIGH);  //Activamos la bomba de agua
     bombaStatus = 1;
-    //digitalWrite(ledPin, HIGH);
+    digitalWrite(ledPin, HIGH);
 
-    
+
     bot.sendMessage(ID_Chat, "Activada manualmente", "");
-    }
-      
- if(lecturaPin2 == HIGH ){
-      digitalWrite(bombPin, LOW);//Desactiva la bomba de agua
-      bombaStatus = 0;
-      digitalWrite(bombPin, LOW);
-      
-      bot.sendMessage(ID_Chat, "Bomba de agua desactivada manualmente", ""); 
-}
+  }
+
+  if (lecturaPin2 == HIGH) {
+    digitalWrite(bombPin, LOW);  //Desactiva la bomba de agua
+    bombaStatus = 0;
+    digitalWrite(bombPin, LOW);
+
+    bot.sendMessage(ID_Chat, "Bomba de agua desactivada manualmente", "");
+  }
 }
 
-void mensajesNuevos(int numerosMensajes)
-{
-  for (int i = 0; i < numerosMensajes; i++)
-  {
+void mensajesNuevos(int numerosMensajes) {
+  for (int i = 0; i < numerosMensajes; i++) {
     chat_id = bot.messages[i].chat_id;
     String text = bot.messages[i].text;
-//////////Activa la Bomba de agua activada indefinidamente //////
-    if (text == "/Activar")
-    {
-      digitalWrite(bombPin, HIGH); 
+    //////////Activa la Bomba de agua activada indefinidamente //////
+    if (text == "/Activar") {
+      digitalWrite(bombPin, HIGH);
       bombaStatus = 1;
       bot.sendMessage(chat_id, "Bomba de agua activada indefinidamente", "");
     }
 
-   
- 
-///////////Desactiva la bomba de agua///////////////////////////
- 
-    if (text == "/Apagar")
-    {
+
+
+    ///////////Desactiva la bomba de agua///////////////////////////
+
+    if (text == "/Apagar") {
       digitalWrite(bombPin, LOW);
       bombaStatus = 0;
       bot.sendMessage(chat_id, "Bomba de agua apagada", "");
-    }  
- 
-////////Estado de la bomba de agua/////////     
- 
-    if (text == "/Estado")
-    {
-      if (bombaStatus)
-      {
+    }
+
+    ////////Estado de la bomba de agua/////////
+
+    if (text == "/Estado") {
+      if (bombaStatus) {
         bot.sendMessage(chat_id, "Estado actual: Bomba de agua encendida", "");
-      }
-      else
-      {
+      } else {
         bot.sendMessage(chat_id, "Estado actual: Bomba de agua apagada", "");
       }
     }
-////////Imprime el menú de ayuda//////////
-    if (text == "/Ayuda")
-    {
-      String ayuda = "Fuente Jardín " ".\n";
+    ////////Imprime el menú de ayuda//////////
+    if (text == "/Ayuda") {
+      String ayuda = "Fuente Jardín "
+                     ".\n";
       ayuda += "Menú:\n\n";
       ayuda += "/Activar: Activa el la bomba de agua. \n";
       ayuda += "/Apagar: Desactiva el la bomba de agua. \n";
@@ -420,10 +393,6 @@ void mensajesNuevos(int numerosMensajes)
       ayuda += "/Ayuda: Imprime este menú \n";
       ayuda += "Recuerda el sistema distingue entre mayuculas y minusculas \n";
       bot.sendMessage(chat_id, ayuda, "");
-    }    
+    }
   }
 }
-
-
-
-  
