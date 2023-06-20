@@ -23,14 +23,14 @@ extern "C" {
 
 // Usuarios y claves para la conexión WiFi
 char ssid[] = "MIWIFI_j7Ff";  //SSID - Red WiFi a la que me conecto
-char pass[] = "*****";     // Passowrd de la red WiFi
+char pass[] = "e6rdPdDh";     // Passowrd de la red WiFi
 
 WiFiClient client;
 
 //Mientras no creo app, lo accionaremos por telegram
 //Token de Telegram BOT se obtenienen desde Botfather en telegram
-#define BOT_TOKEN "*******"
-#define ID_Chat "******"        //ID_Chat se obtiene de telegram
+#define BOT_TOKEN "6290093904:AAEH4SRhlyax4rqqXLPtmgNWrlDeYB9HD_4"
+#define ID_Chat "5928346727"        //ID_Chat se obtiene de telegram
 const unsigned long tiempo = 1000;  //tiempo medio entre escaneo de mensajes
 String datos;
 String chat_id;
@@ -40,11 +40,11 @@ unsigned long tiempoAnterior;  //última vez que se realizó el análisis de men
 
 
 // Variables para definir la conexión con ThingSpeak
-unsigned long myChannelNumber = *******;         //Código de canal de Things Speak
-const char* myWriteAPIKey = "********";  // Indicar aquí el código de escritura de ThingSpeak
+unsigned long myChannelNumber = 2177896;         //Código de canal de Things Speak
+const char* myWriteAPIKey = "XU5MUD4ZN8IJ1A94";  // Indicar aquí el código de escritura de ThingSpeak
 
 //variables del esp32
-const int ledPin = 34;
+const int ledPin = 25;
 const int pulPin = 15;
 const int bombPin = 4;
 //int actual = (digitalRead(bombPin));
@@ -53,18 +53,18 @@ float temp_cpu = ((temprature_sens_read() - 32) / 1.8);
 int bombaStatus = 0;
 int estadoM = 1;
 int inicio = 1;
-int RSSI;
+int RSSI = 0;
 
 //config tira leds RGB
-const int redpin = 13;
-const int greenpin = 12;
-const int bluepin = 14;
-int analogPin = 34;  // entrada del potenciometro para controlar colores leds
-int val;
+//const int redpin = 13;
+//const int greenpin = 12;
+//const int bluepin = 14;
+//int analogPin = 34;  // entrada del potenciometro para controlar colores leds
+//int val;
 
 
 
-//waterflow
+/*waterflow
 //#define LED_BUILTIN
 #define SENSOR 2
 long currentMillis = 0;
@@ -79,20 +79,18 @@ unsigned int flowMilliLitres;
 unsigned long totalMilliLitres;
 int flujo = flowMilliLitres;
 int caudal_total = totalMilliLitres;
-
-
-
-
-
-
 //waterflow
 volatile double waterFlow;
 void IRAM_ATTR pulseCounter() {
   pulseCount++;
 }
 
+*/
+volatile int flujo;
 
 
+
+//SETUP
 
 void setup() {
 
@@ -101,30 +99,34 @@ void setup() {
   digitalWrite(bombPin, LOW);
   pinMode(pulPin, INPUT);
 
-  // pinMode(ledPin, OUTPUT);
-  //  digitalWrite(ledPin, LOW);
+ pinMode(ledPin, OUTPUT);
+  digitalWrite(ledPin, LOW);
 
-  //modopìnes RGB
+  /*modopìnes RGB
   pinMode(redpin, OUTPUT);
   pinMode(bluepin, OUTPUT);
   pinMode(greenpin, OUTPUT);
-
+*/
 
 
   //waterflow
-  Serial.begin(115200);
+   Serial.begin(9600);  //baudrate
+  flujo = 0;
+  attachInterrupt(0, pulse, RISING);  //DIGITAL Pin 2: Interrupt 0
+
 
   //pinMode(LED_BUILTIN, OUTPUT);
-  pinMode(SENSOR, INPUT);
+  //pinMode(SENSOR, INPUT);
 
-  pulseCount = 0;
+//waterflow
+  /*pulseCount = 0;
   flowRate = 0.0;
   flowMilliLitres = 0;
   totalMilliLitres = 0;
   previousMillis = 0;
 
   attachInterrupt(digitalPinToInterrupt(SENSOR), pulseCounter, FALLING);
-
+*/
 
 
 
@@ -134,7 +136,7 @@ void setup() {
 
   Serial.print("Fuente Jardin");
   delay(1000);
-  Serial.print("Iniciando...");
+  Serial.println("Iniciando...");
   delay(200);
 
 
@@ -142,7 +144,7 @@ void setup() {
   WiFi.begin(ssid, pass);  //Se inicia la conexión al Wifi
   WiFi.mode(WIFI_STA);
 
-  Serial.print("Conectando...");
+  Serial.println("Conectando...");
   delay(200);
 
   secured_client.setCACert(TELEGRAM_CERTIFICATE_ROOT);  //Agregar certificado raíz para api.telegram.org
@@ -155,14 +157,14 @@ void setup() {
 
     //Ya que se estableció la conexión al Wifi se imprime conexión establecida
 
-    Serial.print("Conectado");
+    Serial.println("Conectado");
     delay(2000);
     valor_wifi();
   }
   ThingSpeak.begin(client);  //Iniciar el servidor de ThingSpeak
   if (inicio == 1) {
 
-    Serial.print("Sistema listo");
+    Serial.println("Sistema listo");
     delay(200);
     bot.sendMessage(ID_Chat, "Sistema preparado!!!, escribe /Ayuda para ver las opciones", "");  //Enviamos un mensaje a telegram para informar que el sistema está listo
     inicio = 0;
@@ -171,11 +173,11 @@ void setup() {
 
 
 void loop() {
-  valor_wifi();
+ 
 
 
 
-  //funcion leds RGB
+  /*funcion leds RGB
 
   for (val = 255; val > 0; val--) {
     analogWrite(11, val);
@@ -188,7 +190,7 @@ void loop() {
     analogWrite(10, 255 - val);
     analogWrite(9, 128 - val);
     delay(15);
-  }
+  }*/
 
   //Lectura del pulsador
   int lecturaPin15 = digitalRead(pulPin);
@@ -198,7 +200,7 @@ void loop() {
   }
 
 
-  //waterflow
+  /*waterflow
   currentMillis = millis();
   if (currentMillis - previousMillis > interval) {
 
@@ -239,7 +241,17 @@ void loop() {
     Serial.print("mL / ");
     Serial.print(totalMilliLitres / 1000);
     Serial.print("L");
-  }
+  }*/
+
+ //waterflow de serie
+   Serial.print("Flujo:");
+  Serial.print(flujo);
+  Serial.println("   L");
+  delay(500);
+
+
+
+
   //Verifica si hay datos nuevos en telegram cada 1 segundo
   if (millis() - tiempoAnterior > tiempo) {
     int numerosMensajes = bot.getUpdates(bot.last_message_received + 1);
@@ -256,7 +268,7 @@ void loop() {
 
 
 
-
+//Medir temperatuda de la CPU
   Serial.print("Temp CPU: ");
 
   // Convert raw temperature in F to Celsius degrees
@@ -268,14 +280,27 @@ void loop() {
 
 
 
-  //arrancar o apagar bomba
+//arrancar o apagar bomba
   int activar = digitalRead(pulPin);
   if ((bombPin == LOW) && (activar == HIGH)) {
     bombaManual();
   }
+
+  //llamada a funciones 
+   valor_wifi();
+  write_datos();
 }
 
+
 /*FUNCIONES*/
+
+
+//waterflow
+void pulse()   //measure the quantity of square wave
+{
+  flujo += 1.0 / 450.0;
+}
+
 
 //valores conexion wifi
 void valor_wifi() {
@@ -286,7 +311,7 @@ void valor_wifi() {
   Serial.print(WiFi.RSSI());
   int RSSI = (WiFi.RSSI()) * -1;
 
-  write_datos();
+  
 }
 
 //Funciona para escribir datos en la nube
@@ -299,7 +324,7 @@ void write_datos() {
   int mensaje = ThingSpeak.writeFields(myChannelNumber, myWriteAPIKey);
 
   ThingSpeak.setField(3, temp_cpu);
-  ThingSpeak.setField(4, caudal_total);
+  //ThingSpeak.setField(4, caudal_total);
   ThingSpeak.setField(1, bombaStatus);
   ThingSpeak.setField(2, flujo);
   ThingSpeak.setField(7, RSSI);
@@ -337,7 +362,7 @@ void bombaManual() {
   if (lecturaPin2 == LOW) {
     digitalWrite(bombPin, HIGH);  //Activamos la bomba de agua
     bombaStatus = 1;
-    digitalWrite(ledPin, HIGH);
+    digitalWrite(ledPin, HIGH); //Activamos leds
 
 
     bot.sendMessage(ID_Chat, "Activada manualmente", "");
@@ -346,7 +371,8 @@ void bombaManual() {
   if (lecturaPin2 == HIGH) {
     digitalWrite(bombPin, LOW);  //Desactiva la bomba de agua
     bombaStatus = 0;
-    digitalWrite(bombPin, LOW);
+     digitalWrite(ledPin, HIGH); //Desctivamos leds
+    
 
     bot.sendMessage(ID_Chat, "Bomba de agua desactivada manualmente", "");
   }
