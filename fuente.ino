@@ -53,8 +53,7 @@ float temp_cpu = ((temprature_sens_read() - 32) / 1.8);
 int bombaStatus = 0;
 int estadoM = 1;
 int inicio = 1;
-int RSSI = 0;
-
+ int RSSI = (WiFi.RSSI()) * -1;
 //config tira leds RGB
 //const int redpin = 13;
 //const int greenpin = 12;
@@ -169,6 +168,7 @@ void setup() {
     bot.sendMessage(ID_Chat, "Sistema preparado!!!, escribe /Ayuda para ver las opciones", "");  //Enviamos un mensaje a telegram para informar que el sistema está listo
     inicio = 0;
   }
+  write_datos();
 }
 
 
@@ -248,6 +248,7 @@ void loop() {
   Serial.print(flujo);
   Serial.println("   L");
   delay(500);
+  write_datos();
 
 
 
@@ -264,6 +265,7 @@ void loop() {
     }
 
     tiempoAnterior = millis();
+    write_datos();
   }
 
 
@@ -277,6 +279,7 @@ void loop() {
   Serial.print((temprature_sens_read() - 32) / 1.8);
 
   delay(50);
+  write_datos();
 
 
 
@@ -299,6 +302,7 @@ void loop() {
 void pulse()   //measure the quantity of square wave
 {
   flujo += 1.0 / 450.0;
+  write_datos();
 }
 
 
@@ -310,6 +314,7 @@ void valor_wifi() {
 
   Serial.print(WiFi.RSSI());
   int RSSI = (WiFi.RSSI()) * -1;
+  write_datos();
 
   
 }
@@ -366,6 +371,7 @@ void bombaManual() {
 
 
     bot.sendMessage(ID_Chat, "Activada manualmente", "");
+    write_datos();
   }
 
   if (lecturaPin2 == HIGH) {
@@ -375,6 +381,7 @@ void bombaManual() {
     
 
     bot.sendMessage(ID_Chat, "Bomba de agua desactivada manualmente", "");
+    write_datos();
   }
 }
 
