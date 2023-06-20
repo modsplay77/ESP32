@@ -23,14 +23,14 @@ extern "C" {
 
 // Usuarios y claves para la conexión WiFi
 char ssid[] = "MIWIFI_j7Ff";  //SSID - Red WiFi a la que me conecto
-char pass[] = "e6rdPdDh";     // Passowrd de la red WiFi
+char pass[] = "******";     // Passowrd de la red WiFi
 
 WiFiClient client;
 
 //Mientras no creo app, lo accionaremos por telegram
 //Token de Telegram BOT se obtenienen desde Botfather en telegram
-#define BOT_TOKEN "6290093904:AAEH4SRhlyax4rqqXLPtmgNWrlDeYB9HD_4"
-#define ID_Chat "5928346727"        //ID_Chat se obtiene de telegram
+#define BOT_TOKEN "*****:*****"
+#define ID_Chat "*****"        //ID_Chat se obtiene de telegram
 const unsigned long tiempo = 1000;  //tiempo medio entre escaneo de mensajes
 String datos;
 String chat_id;
@@ -41,7 +41,7 @@ unsigned long tiempoAnterior;  //última vez que se realizó el análisis de men
 
 // Variables para definir la conexión con ThingSpeak
 unsigned long myChannelNumber = 2177896;         //Código de canal de Things Speak
-const char* myWriteAPIKey = "XU5MUD4ZN8IJ1A94";  // Indicar aquí el código de escritura de ThingSpeak
+const char* myWriteAPIKey = "*******";  // Indicar aquí el código de escritura de ThingSpeak
 
 //variables del esp32
 const int ledPin = 25;
