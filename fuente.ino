@@ -312,8 +312,8 @@ void valor_wifi() {
   Serial.print(WiFi.localIP());
   Serial.print("Signal Strength: ");
 
-  Serial.print(WiFi.RSSI());
-  int RSSI = (WiFi.RSSI()) * -1;
+  Serial.print((WiFi.RSSI()) * -1);
+
   write_datos();
 
   
