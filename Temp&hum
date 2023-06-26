@@ -8,7 +8,7 @@
 #include <DFRobot_SHT3x.h>
 
 // Usuarios y claves para la conexión WiFi
-char ssid[] = "Livebox6-767D"; //SSID - Red WiFi a la que me conecto
+char ssid[] = "Livebox6-767D-24G"; //SSID - Red WiFi a la que me conecto
 char pass[] = "******"; // Passowrd de la red WiFi
 int status = WL_IDLE_STATUS;
 WiFiClient client;
