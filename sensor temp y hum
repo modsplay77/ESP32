@@ -7,56 +7,52 @@
 #include <Wire.h>
 #include <DFRobot_SHT3x.h>
 
-// Usuarios y claves para la conexión WiFi
+// Usuarios y claves para la conexión WiFi para dos localizaciones, en mi caso de pruebas.
 //char ssid[] = "MiFibra-AAC7"; //SSID - Red WiFi a la que me conecto
-//char pass[] = "A3V9tNRv"; // Passowrd de la red WiFi
+//char pass[] = "*****"; // Passowrd de la red WiFi
 char ssid[] = "Livebox6-767D"; //SSID - Red WiFi a la que me conecto
-char pass[] = "dvK6G3QnFLbz"; // Passowrd de la red WiFi
+char pass[] = "*******"; // Passowrd de la red WiFi
 
 
 int status = WL_IDLE_STATUS;
 WiFiClient client;
 
+//Declaración de variables
 
 float temp;
 float hum ;
 int inicio = 1;
 int periodo = 1800 ; //mas o menos media hora en segundos, entre delays etc será más de media hora
- int cont = 0; //creamos contador
- int n=0; //para resetear cont
-/*unsigned long tiempoAnterior = 0; // almacena la ultima vez que se lanzo nuestro evento
-unsigned long tiempoActual = millis();//activamos lectura de tiempo al arrancar sistema, tiene q estar declarado aqui, si o si
-*/
+int cont = 0; //creamos contador
+int n=0; //para resetear cont
+
 
 
 // Variables para definir la conexión con ThingSpeak
-unsigned long myChannelNumber = 2202587; //Código de canal de Things Speak
-const char * myWriteAPIKey = "K5ZKC1NPDSHY1V6V"; // Indicar aquí el código de escritura de ThingSpeak
+unsigned long myChannelNumber = ******; //Código de canal de Things Speak
+const char * myWriteAPIKey = "*********"; // Indicar aquí el código de escritura de ThingSpeak
 
 
-
+//definimos el sensor que estamos utilzando, en mi caso es este:
 //DFRobot_SHT3x sht3x(&Wire,/*address=*/0x45,/*RST=*/4);
 DFRobot_SHT3x   sht3x;
 
 
 void setup() {
-  Serial.begin(115200);
 
-    DFRobot_SHT3x::sRHAndTemp_t data = sht3x.readTemperatureAndHumidity(sht3x.eRepeatability_High);
+Serial.begin(115200);
+DFRobot_SHT3x::sRHAndTemp_t data = sht3x.readTemperatureAndHumidity(sht3x.eRepeatability_High);
 
 //Imprimir mensaje de conexión a la red Wifi
 WiFi.begin(ssid, pass); //Se inicia la conexión al Wifi
 ThingSpeak.begin(client); // Inicia ThingSpeak
-  WiFi.mode(WIFI_STA);
+WiFi.mode(WIFI_STA);
     Serial.println("Conectando...");
  delay (5000);
-
-  
 
 //Minetras se conecta imprimirá ...
 while(WiFi.status() != WL_CONNECTED){
   delay(5000);
-  
   
 //Ya que se estableció la conexión al Wifi se imprime conexión establecida
 
@@ -114,9 +110,9 @@ while(WiFi.status() != WL_CONNECTED){
 void loop() {
   delay (1000);
  //comprobamos contador y reseteamos si es necesario
-  if ((periodo == 30)&(cont == 30)){
+  if ((periodo == 1800)&(cont == 1800)){
   n=cont;
-  if(n>=30)(cont=0);
+  if(n>=1800)(cont=0);
   update();
   
   }else{
@@ -124,24 +120,26 @@ void loop() {
 //Serial.println(cont);
     }
 }
-
+//Funcion de subida de datos al ThingSpeak
 void update(){
 
 delay(200);
+//Leemos datos del sensor
 float temp =  (sht3x.getTemperatureC());
 float hum = (sht3x.getHumidityRH());
 
-
+//conectamos con ThingSpeak
 int mensaje = ThingSpeak.writeFields(myChannelNumber, myWriteAPIKey);
 ThingSpeak.setField(1, temp); 
 ThingSpeak.setField(2, hum); 
 //Serial.println("Enviamos las variables a la nube...");
-delay(5000);//damos mas tiempo al servidor para que nops responda
+delay(5000); //damos mas tiempo al servidor para que nops responda
 
+//Si Thingspeak responde con el n 200, es que los datos han subido correctamente.
 if (mensaje == 200){
   Serial.println("Subidas las variables, correctamente!!!");
    delay(100);
   }else{
-    update();
+    update(); //Si ha fallado, reintentamos el update()
     }
 }
