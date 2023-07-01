@@ -1,3 +1,4 @@
+
 #include <ThingSpeak.h>
 #include <WiFi.h>
 #include <WiFiClient.h>
@@ -8,9 +9,9 @@
 
 // Usuarios y claves para la conexión WiFi
 //char ssid[] = "MiFibra-AAC7"; //SSID - Red WiFi a la que me conecto
-//char pass[] = "******"; // Passowrd de la red WiFi
+//char pass[] = "A3V9tNRv"; // Passowrd de la red WiFi
 char ssid[] = "Livebox6-767D"; //SSID - Red WiFi a la que me conecto
-char pass[] = "*******"; // Passowrd de la red WiFi
+char pass[] = "dvK6G3QnFLbz"; // Passowrd de la red WiFi
 
 
 int status = WL_IDLE_STATUS;
@@ -20,15 +21,17 @@ WiFiClient client;
 float temp;
 float hum ;
 int inicio = 1;
-const unsigned long periodo = 1800000; // cargamos datos en la nube cada media hora
-unsigned long tiempoAnterior = 0; // almacena la ultima vez que se lanzo nuestro evento
-unsigned long tiempoActual = millis();//activamos lectura de tiempo al arrancar sistema
-
+int periodo = 1800 ; //mas o menos media hora en segundos, entre delays etc será más de media hora
+ int cont = 0; //creamos contador
+ int n=0; //para resetear cont
+/*unsigned long tiempoAnterior = 0; // almacena la ultima vez que se lanzo nuestro evento
+unsigned long tiempoActual = millis();//activamos lectura de tiempo al arrancar sistema, tiene q estar declarado aqui, si o si
+*/
 
 
 // Variables para definir la conexión con ThingSpeak
-unsigned long myChannelNumber = *******; //Código de canal de Things Speak
-const char * myWriteAPIKey = "**********"; // Indicar aquí el código de escritura de ThingSpeak
+unsigned long myChannelNumber = 2202587; //Código de canal de Things Speak
+const char * myWriteAPIKey = "K5ZKC1NPDSHY1V6V"; // Indicar aquí el código de escritura de ThingSpeak
 
 
 
@@ -40,9 +43,7 @@ void setup() {
   Serial.begin(115200);
 
     DFRobot_SHT3x::sRHAndTemp_t data = sht3x.readTemperatureAndHumidity(sht3x.eRepeatability_High);
-      Serial.println("Iniciando Sistema...");
-      delay(100);
-      
+
 //Imprimir mensaje de conexión a la red Wifi
 WiFi.begin(ssid, pass); //Se inicia la conexión al Wifi
 ThingSpeak.begin(client); // Inicia ThingSpeak
@@ -60,10 +61,10 @@ while(WiFi.status() != WL_CONNECTED){
 //Ya que se estableció la conexión al Wifi se imprime conexión establecida
 
     Serial.println("Conectado");
-    delay (200);
+    delay (2000);
     Serial.print("IP: ");
      Serial.println(WiFi.localIP());  
- delay (200);
+ delay (2000);
 } 
 
   //Initialize the chip
@@ -103,124 +104,44 @@ while(WiFi.status() != WL_CONNECTED){
   if(inicio == 1){
 
     Serial.println("Sistema listo");
-    delay (5000);
+    delay (500);
     inicio = 0;
-
+    update(); //al iniciarse el programa, nos aseguramos el 1er update
 }
- Serial.println("Primer arranque , update automatico");
- delay(2000);
-update();
-
-
 }
+
 
 void loop() {
-
- 
-delay (5000);//damos tiempo a que el sensor se prepare
-Serial.println("Pasamos por loop");
-delay(2000);
-Serial.println("Llamamos a sensor()");
- sensor();
-}
-
-
-void sensor (){
-  
- 
-  Serial.println("Se ejecuta sensor()");
-  delay(5000);
-  //Imprimimos en serial
- // Serial.print("Ambient Temperature(°C):");
-  //Serial.print(sht3x.getTemperatureC());//leemos temp
-  //Serial.println(" ºC");
-  float temp =  (sht3x.getTemperatureC());
-   
-  //Serial.print("Relative Humidity(%RH):");
- // Serial.print(sht3x.getHumidityRH());
- // Serial.println(" %RH");
-      float hum = (sht3x.getHumidityRH());
- 
-
-   unsigned long tiempoActual = millis();//activamos lectura de tiempo al arrancar sistema
-   Serial.println("Se ha leido la temp y la hum y actualizado tiempoActual");
-   delay(2000);
-   Serial.print(tiempoActual);
-   Serial.println(" /miliseg = Tiempo Actual");
-
-/* Comprobamos si debemos lanzar el evento */
-  Serial.println("Comprobamos si el intervalo se ha cumplido");
-  delay(2000);
-  unsigned long cumplido = (tiempoActual - tiempoAnterior);
-  Serial.print("Cumplidos: "); 
-  Serial.print(cumplido);
-  Serial.println(" /milisegundos de 1800000 que es 1/2 H");  
-  delay(2000);
-
-  
-  if (tiempoActual - tiempoAnterior >= periodo) {
-Serial.println("Se ha cumplido...pasamos a leer y subir datos a la nube");
-delay(2000);
-    /* Han pasado los 10 segundos => lanzamos el evento */
-    Serial.print("Temperatura ambiente: ");
-   Serial.print(sht3x.getTemperatureC());
-   Serial.println(" ºC");
-   delay(2000);
-   Serial.print("Humedad en ambiente: ");
-   Serial.print(sht3x.getHumidityRH());
-   Serial.println(" %Hum");
-   delay(2000);
-
-  Serial.println("Llamamos a update() con nuevo marcador");
-  delay(2000);
+  delay (1000);
+ //comprobamos contador y reseteamos si es necesario
+  if ((periodo == 30)&(cont == 30)){
+  n=cont;
+  if(n>=30)(cont=0);
   update();
-  } else {Serial.println("Intervalo no cumplido.. volvemos a loop");
-delay (2000);}
+  
+  }else{
+    cont++;
+//Serial.println(cont);
+    }
 }
-
-
 
 void update(){
- 
-    
-  Serial.println("update llamado y ejecutandose...");
-  delay(2000);
 
-  float temp =  (sht3x.getTemperatureC());
-  float hum = (sht3x.getHumidityRH());
- Serial.println("Leidas las variables");
- delay(1000);
+delay(200);
+float temp =  (sht3x.getTemperatureC());
+float hum = (sht3x.getHumidityRH());
 
-  int mensaje = ThingSpeak.writeFields(myChannelNumber, myWriteAPIKey);
-  ThingSpeak.setField(1, temp); 
-  ThingSpeak.setField(2, hum); 
- Serial.println("Enviamos las variables a la nube...");
- delay(15000);//damos mas tiempo al servidor para que nops responda
+
+int mensaje = ThingSpeak.writeFields(myChannelNumber, myWriteAPIKey);
+ThingSpeak.setField(1, temp); 
+ThingSpeak.setField(2, hum); 
+//Serial.println("Enviamos las variables a la nube...");
+delay(5000);//damos mas tiempo al servidor para que nops responda
 
 if (mensaje == 200){
   Serial.println("Subidas las variables, correctamente!!!");
-   delay(2000);
-       /* Se actualiza el temporizador para los siguientes intervalo */
-       Serial.println("Reiniciamos intervalo para subir datos en 1/2 hora, asignando nuevo marcador.");
-       delay(2000);
-        unsigned long tiempoActual = millis();//activamos lectura de tiempo al arrancar sistema
-   unsigned long tiempoAnterior = tiempoActual;
-    Serial.print("Contamos a partir de este marcador: ");
-    Serial.print(tiempoAnterior);
-      Serial.println(" /milisegundos es el nuevo marcador");
-    delay (2000);
-    
-    
-
-}else{
-      Serial.print("ERROR: " + String(mensaje));
-
-    Serial.println(" ERROR envio");
-    delay(2000);
-    Serial.println("Error en envio, reiniciamos envio...");
-    delay(2000);
+   delay(100);
+  }else{
     update();
-
     }
-
 }
