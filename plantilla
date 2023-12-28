@@ -39,8 +39,8 @@ float temp_cpu = ((temprature_sens_read() - 32) / 1.8);
 
 
 // Variables para definir la conexión con ThingSpeak
-unsigned long myChannelNumber = 2202587; //Código de canal de Things Speak
-const char * myWriteAPIKey = "K5ZKC1NPDSHY1V6V"; // Indicar aquí el código de escritura de ThingSpeak
+unsigned long myChannelNumber = *******; //Código de canal de Things Speak
+const char * myWriteAPIKey = "********"; // Indicar aquí el código de escritura de ThingSpeak
 
 
 //definimos el sensor que estamos utilzando, en mi caso es este:
